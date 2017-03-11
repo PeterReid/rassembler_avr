@@ -13,6 +13,7 @@ enum Arg {
     Unsigned(char),
     RelativeOffset(char),
     AbsoluteOffset(char),
+    AbsoluteOffsetDoubles(char), // measured by 16-bit intervals
     ImplicitZ,
     
 }
@@ -29,6 +30,7 @@ impl Arg {
             &Arg::Unsigned(c) => c,
             &Arg::RelativeOffset(c) => c,
             &Arg::AbsoluteOffset(c) => c,
+            &Arg::AbsoluteOffsetDoubles(c) => c,
             &Arg::ImplicitZ => 'z',
         }
     }
@@ -40,6 +42,7 @@ impl Arg {
             &Arg::Unsigned(_) => "u32".to_string(),
             &Arg::RelativeOffset(_) => "Offset".to_string(),
             &Arg::AbsoluteOffset(_) => "Offset".to_string(),
+            &Arg::AbsoluteOffsetDoubles(_) => "Offset".to_string(),
             &Arg::ImplicitZ => "RegisterPair".to_string(),
         }
     }
@@ -54,6 +57,7 @@ const S: Arg = Arg::Unsigned('s');
 const B: Arg = Arg::Unsigned('b');
 const OFFSET: Arg = Arg::RelativeOffset('k');
 const ABSOLUTE_OFFSET: Arg = Arg::AbsoluteOffset('k');
+const ABSOLUTE_OFFSET_DOUBLES: Arg = Arg::AbsoluteOffsetDoubles('k');
 const A: Arg = Arg::Unsigned('A');
 
 static INSTRUCTIONS: [InstructionSpec; 117] = [
@@ -91,7 +95,7 @@ static INSTRUCTIONS: [InstructionSpec; 117] = [
     
     ("bset", &[S], "1001 0100 0sss 1000"),
     ("bst", &[RD, B], "1111 101d dddd 0bbb"),
-    ("call", &[OFFSET], "1001 010k kkkk 111k kkkk kkkk kkkk kkkk"),
+    ("call", &[ABSOLUTE_OFFSET_DOUBLES], "1001 010k kkkk 111k kkkk kkkk kkkk kkkk"),
     ("cbi", &[A, B], "1001 1000 AAAA Abbb"),
     ("cbr", &[RD, K], "0111 KKKK dddd KKKK"), // TODO: test this
     ("clc", &[], "1001 0100 1000 1000"),
@@ -121,7 +125,7 @@ static INSTRUCTIONS: [InstructionSpec; 117] = [
     ("ijmp", &[], "1001 0100 0000 1001"),
     ("in_", &[RD, A], "1011 0AAd dddd AAAA"),
     ("inc", &[RD], "1001 010d dddd 0011"),
-    ("jmp", &[OFFSET], "1001 010k kkkk 110k kkkk kkkk kkkk kkkk"),
+    ("jmp", &[ABSOLUTE_OFFSET_DOUBLES], "1001 010k kkkk 110k kkkk kkkk kkkk kkkk"),
     ("lac", &[Arg::ImplicitZ, RD], "1001 001d dddd 0110"),
     ("las", &[Arg::ImplicitZ, RD], "1001 001d dddd 0101"),
     ("lat", &[Arg::ImplicitZ, RD], "1001 001d dddd 0111"),
@@ -204,6 +208,9 @@ fn main() {
                 }
                 Arg::AbsoluteOffset(_) => {
                     lines.push(format!("        let {} = self.resolve_absolute_offset({});", arg.name(), arg.name()));
+                }
+                Arg::AbsoluteOffsetDoubles(_) => {
+                    lines.push(format!("        let {} = self.resolve_absolute_offset_doubles({});", arg.name(), arg.name()));
                 }
                 _ => {}
             }

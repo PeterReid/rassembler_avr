@@ -277,6 +277,11 @@ impl Assembler {
             Offset::Relative(x) => (self.buf.len() as i32 + x) as u32
         }
     }
+    fn resolve_absolute_offset_doubles(&self, offset: Offset) -> u32 {
+        let offset = self.resolve_absolute_offset(offset);
+        assert!(offset % 2 == 0, "offset must be even");
+        offset / 2
+    }
     fn resolve_relative_offset(&self, offset: Offset) -> i32 {
         (self.resolve_absolute_offset(offset) as i32) - (self.buf.len() as i32)
     }
